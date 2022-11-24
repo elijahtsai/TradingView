@@ -1,0 +1,68 @@
+bs=data-data2
+col_grow_above = input(#26A69A, "Above Grow", group="Histogram", inline="Above")
+col_fall_above = input(#B2DFDB, "Fall", group="Histogram", inline="Above")
+col_grow_below = input(#FFCDD2, "Below Grow", group="Histogram", inline="Below")
+col_fall_below = input(#FF5252, "Fall", group="Histogram", inline="Below")
+remain_col_color = col_grow_above
+unit=1000
+if remain != remain[1]
+    if remain >= 0 
+        if remain [1] < remain
+            remain_col_color := col_grow_above
+        else 
+            remain_col_color := col_fall_above
+    else
+        if remain [1] > remain
+            remain_col_color := col_fall_below
+        else 
+            remain_col_color := col_grow_below
+else
+    remain_col_color := remain_col_color[1]
+bgc = color.new(na, 100)
+if strategy.position_size >= 0 
+    if strategy.position_size+bs >= 0 
+        if bs > 0 
+            strategy.entry("L", strategy.long, qty = bs*unit, comment="多")
+            if strategy.position_size == 0 or strategy.position_size[1] < 0
+                bgc := color.new(color.red, 20)
+        else if bs < 0
+            strategy.close("L" , qty = math.abs(bs)*unit, comment="多出")
+    else
+        strategy.close("L" , qty_percent = 100, comment="多全出")
+        strategy.entry("S", strategy.short, math.abs(bs)*unit-strategy.position_size, comment="反手空")
+        bgc := color.new(color.green, 20)
+else
+    if strategy.position_size+bs <= 0 
+        if bs < 0 
+            strategy.entry("S", strategy.short, qty = math.abs(bs)*unit, comment="空")
+        else if bs > 0
+            strategy.close("S" , qty = bs*unit, comment="空出")
+    else
+        strategy.close("S" , qty_percent = 100, comment="空全出")
+        strategy.entry("L", strategy.long, bs*unit-math.abs(strategy.position_size), comment="反手多")
+        bgc := color.new(color.red, 20)
+bgcolor(color=bgc)
+t_bs = ((strategy.position_size/strategy.position_size[1])-1)*-100
+plot(strategy.position_avg_price, title="均價",color=color.yellow,style=plot.style_line)
+plot(strategy.position_size/100000, title="倉位數量(百張)",color=color.orange,style=plot.style_line, offset = -1)
+plot(close-strategy.position_avg_price, title="均價差距",color=color.rgb(59, 255, 118),style=plot.style_line)
+plot(((strategy.position_avg_price/strategy.position_avg_price[1])-1)*100, title="均價成長(%)",color=color.rgb(0, 255, 242),style=plot.style_line)
+plot(t_bs, title="倉位成長(%)",color=color.orange,style=plot.style_line, offset=-1 )
+
+barcol = #000000
+
+ma_fast = ta.sma(close, 20)
+ma_slow = ta.sma(close, 60)
+
+if t_bs > 0
+    if ma_slow > ma_slow[1]
+        barcol := #ff0000 // 多進
+    else
+        barcol := #ff9900 // 空出
+else if t_bs < 0 
+    if ma_slow < ma_slow[1]
+        barcol := #00ff00 // 空進
+    else
+        barcol := #2600ff // 多出
+
+plot(t_bs, title="Value", style=plot.style_columns, color=barcol, offset=-1)
